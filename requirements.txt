@@ -1,0 +1,15 @@
+django==5
+python-environ==0.4.54
+django-redis==5.4.0
+celery==5.5.2
+django-celery-results==2.6.0
+django-celery-beat==2.8.1
+psycopg2-binary==2.9.10
+gunicorn==23.0.0
+python-telegram-bot==13.15
+pillow==11.2.1
+openai==1.82.1
+pdf2image==1.17.0
+pytesseract==0.3.13
+PyPDF2==3.0.1
+request

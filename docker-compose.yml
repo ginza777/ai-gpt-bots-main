@@ -1,0 +1,109 @@
+services:
+  db:
+    container_name: ${PROJECT_NAME}_db
+    image: postgres:16
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+      - ./postgresql/postgresql.conf:/etc/postgresql/postgresql.conf
+      - ./postgresql/pg_hba.conf:/etc/postgresql/pg_hba.conf
+    env_file:
+      - .env
+    command: postgres -c config_file=/etc/postgresql/postgresql.conf
+    environment:
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_HOST=${DB_HOST}
+      - POSTGRES_PORT=${DB_PORT}
+    restart: always
+
+  web: &web
+    container_name: ${PROJECT_NAME}_backend
+    restart: always
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    command: ./entrypoint.sh
+    security_opt:
+      - seccomp:unconfined
+    volumes:
+      - ./:/app
+      - ./static:/home/app/web/static
+      - ./media:/home/app/web/media
+    env_file:
+      - .env
+    environment:
+      - TZ=Asia/Tashkent
+    ports:
+      - "8001:8001"
+    depends_on:
+      - db
+      - redis
+      - pgbouncer
+
+  redis:
+    container_name: ${PROJECT_NAME}_redis
+    image: redis:7.2.4-alpine
+    restart: always
+
+  pgbouncer:
+    container_name: ${PROJECT_NAME}_pgbouncer
+    image: edoburu/pgbouncer
+    ports:
+      - "6432:6432"
+    depends_on:
+      - db
+    environment:
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - POOL_MODE=transaction
+      - MAX_CLIENT_CONN=2000
+      - DEFAULT_POOL_SIZE=100
+      - MIN_POOL_SIZE=20
+      - RESERVE_POOL_SIZE=50
+      - RESERVE_POOL_TIMEOUT=5
+      - SERVER_RESET_QUERY=DISCARD ALL
+      - SERVER_LIFETIME=3600
+      - SERVER_IDLE_TIMEOUT=300
+      - SERVER_LOGIN_RETRY=10
+      - SERVER_CONNECT_TIMEOUT=10
+      - QUERY_WAIT_TIMEOUT=120
+      - LISTEN_PORT=6432
+      - PGBOUNCER_AUTH_TYPE=scram-sha-256
+      - AUTH_TYPE=scram-sha-256
+    restart: always
+
+  celery_worker:
+    <<: *web
+    ports: [ ]
+    command: celery -A core.celery worker --concurrency=18 --loglevel=info
+    container_name: ${PROJECT_NAME}_celery_worker
+    depends_on:
+      - web
+
+  celery_beat:
+    <<: *web
+    ports: [ ]
+    command: celery -A core.celery beat -l INFO
+    container_name: ${PROJECT_NAME}_celery_beat
+    depends_on:
+      - web
+
+  flower:
+    image: mher/flower
+    container_name: ${PROJECT_NAME}_flower
+    restart: always
+    command: celery --broker=redis://redis:6379/0 flower --port=5555
+    ports:
+      - "5544:5555"
+    depends_on:
+      - redis
+      - celery_worker
+    environment:
+      - FLOWER_PORT=5555
+
+volumes:
+  postgres_data:
+  static_volume:
