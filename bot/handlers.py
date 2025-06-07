@@ -188,6 +188,21 @@ def handle_profile(update: Update, context: CallbackContext) -> None:
     )
 
 
+from django.utils import timezone
+from datetime import timedelta
+import asyncio
+import threading
+
+def delete_after_delay(bot, chat_id, message_ids, delay=2):
+    def task():
+        asyncio.run(asyncio.sleep(delay))  # 2 sekund kutadi
+        for mid in message_ids:
+            try:
+                bot.delete_message(chat_id=chat_id, message_id=mid)
+            except Exception as e:
+                print(f"❌ Xabar o‘chirishda xatolik: {e}")
+    threading.Thread(target=task).start()
+
 def gpt_handle_text(update: Update, context: CallbackContext):
     message = update.message
     if not message:
@@ -195,32 +210,52 @@ def gpt_handle_text(update: Update, context: CallbackContext):
 
     uid = message.from_user.id
     user = TelegramUser.objects.get(telegram_id=uid)
+
+    # 🔍 1. So‘nggi 10 soniyadagi yakunlanmagan message ni tekshir
+    # 10 soniya ichidagi tugallanmagan so‘rovni tekshiramiz
+    last_10_sec = timezone.now() - timedelta(seconds=10)
+    unfinished_message = Message.objects.filter(
+        telegram_user=user,
+        is_finished=False,
+        created_at__gte=last_10_sec
+    ).order_by('-created_at').first()
+
+    if unfinished_message:
+        sent_message = message.reply_text("Sizda hali tugamagan suhbat mavjud. Iltimos, biroz kuting.")
+        delete_after_delay(context.bot, message.chat_id, [message.message_id, sent_message.message_id])
+        return
+
+
+
+    # 🔽 Quyidagisi sizning mavjud kodlaringiz
     text = message.text
     lang = user.language
-
     instruction = {
         "ru": "Отвечай на русском языке.",
         "uz": "O'zbek tilida javob ber.",
         "en": "Answer in English."
     }.get(lang, "Answer in English.")
+
     thread_id = user.get_thread_id(settings.AI_BOT.username)
     print("thread_id", thread_id)
     telegram_message = message.reply_text(translate("waiting_response_message", user.language))
+
     response = client.beta.threads.messages.create(
         thread_id=thread_id,
         role="user",
         content=f"{TEXT_PROMPTS[lang]}\n{instruction}\n\n{text}"
     )
     print(response, "response")
-    run = client.beta.threads.runs.create(thread_id=thread_id,
-                                          assistant_id=settings.ASSISTANT_ID)
+
+    run = client.beta.threads.runs.create(thread_id=thread_id, assistant_id=settings.ASSISTANT_ID)
     print(run, "run")
+
     is_finished = False
     is_on_process = True
     response_message = None
+
     if run.status == "completed":
-        response = client.beta.threads.messages.list(thread_id=thread_id, order="desc").data[0].content[
-            0].text.value
+        response = client.beta.threads.messages.list(thread_id=thread_id, order="desc").data[0].content[0].text.value
         context.bot.edit_message_text(
             text=response,
             chat_id=user.telegram_id,
@@ -228,6 +263,7 @@ def gpt_handle_text(update: Update, context: CallbackContext):
         )
         response_message = response
         is_finished = True
+
     message = Message.objects.create(
         telegram_user=user,
         thread_id=thread_id,
@@ -238,8 +274,9 @@ def gpt_handle_text(update: Update, context: CallbackContext):
         is_on_process=is_on_process,
         response_message=response_message
     )
+
     if not message.is_finished:
-        check_message_result_with_message_id.apply_async(countdown=2, args=[message.id])
+        check_message_result_with_message_id.apply_async(countdown=0.1, args=[message.id])
 
 
 def main_message_handler(update: Update, context: CallbackContext) -> None:

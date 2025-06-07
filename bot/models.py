@@ -16,6 +16,8 @@ class Message(BaseModel):
     cost = models.PositiveIntegerField(verbose_name="Cost", default=50)
     is_on_process = models.BooleanField(default=False, verbose_name="On Process")
     is_finished = models.BooleanField(default=False, verbose_name="Finished")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Created At")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Updated At")
 
     class Meta:
         verbose_name = "Message"
