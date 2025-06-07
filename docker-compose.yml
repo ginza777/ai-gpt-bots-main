@@ -104,6 +104,7 @@ services:
     environment:
       - FLOWER_PORT=5555
 
+
 volumes:
   postgres_data:
   static_volume:
