@@ -39,7 +39,6 @@ def add_handlers(dp):
     dp.add_handler(CommandHandler("contact", handle_contact))
     dp.add_handler(MessageHandler(Filters.contact, handle_phone_number_contact))
     dp.add_handler(MessageHandler(Filters.text, main_message_handler))
-    dp.add_handler(CallbackQueryHandler(main_inline_handler))
     return dp
 
 
