@@ -276,7 +276,7 @@ def gpt_handle_text(update: Update, context: CallbackContext):
     )
 
     if not message.is_finished:
-        check_message_result_with_message_id.apply_async(countdown=0.1, args=[message.id])
+        check_message_result_with_message_id.apply_async(countdown=1, args=[message.id])
 
 
 def main_message_handler(update: Update, context: CallbackContext) -> None:
