@@ -12,13 +12,14 @@ from .buttons.inline import plans_inline_button
 from .buttons.keyboard import main_button_keyboard, language_button_keyboard, languages, to_main_menu_keyboard,settings_menu_keyboard, phone_number_button_keyboard
 from .models import  Message
 from .tasks import check_message_result_with_message_id
-
+#import parse mode
+from telegram import ParseMode
 client = settings.OPENAI_CLIENT
 
 TEXT_PROMPTS = {
-    "ru": "Вы — умный AI-помощник. Пожалуйста, прочитайте текст и объясните его простыми словами, чтобы это было понятно обычному человеку без специальной подготовки.",
-    "uz": "Siz aqlli AI yordamchisiz. Iltimos, matnni o‘qing va uni maxsus bilimga ega bo‘lmagan odamga oddiy va tushunarli qilib tushuntiring.",
-    "en": "You are a smart AI assistant. Please read the text and explain it in simple, clear language for someone without any special background."
+    "ru": "Вы — умный AI-помощник",
+    "uz": "Siz aqlli AI yordamchisiz.",
+    "en": "You are a smart AI assistant"
 }
 
 
@@ -134,6 +135,14 @@ def handle_about_section(update: Update, context: CallbackContext) -> None:
     )
 
 
+def handle_github_section(update: Update, context: CallbackContext) -> None:
+    update.message.reply_text(
+        translate("github_section", get_user_lang(update.effective_user.id)),
+        reply_markup=main_button_keyboard(get_user_lang(update.effective_user.id)),
+        parse_mode=ParseMode.HTML
+    )
+
+
 def handle_contact(update: Update, context: CallbackContext) -> None:
     update.message.reply_text(
         translate("contact", get_user_lang(update.effective_user.id)),
@@ -147,20 +156,6 @@ def handle_help_command(update: Update, context: CallbackContext) -> None:
         reply_markup=main_button_keyboard(get_user_lang(update.effective_user.id)),
     )
 
-
-def handle_medical_card(update: Update, context: CallbackContext) -> None:
-    user = TelegramUser.objects.get(telegram_id=update.effective_user.id)
-    total_messages = Message.objects.filter(
-        telegram_user=user
-    ).count()
-    if total_messages < 30:
-        update.message.reply_text(
-            translate("medical_card_info", user.language, used_count=total_messages)
-        )
-    else:
-        update.message.reply_text(
-            translate("medical_card_dev", user.language)
-        )
 
 
 def handle_settings(update: Update, context: CallbackContext) -> None:
@@ -202,11 +197,7 @@ def gpt_handle_text(update: Update, context: CallbackContext):
     user = TelegramUser.objects.get(telegram_id=uid)
     text = message.text
     lang = user.language
-    balance = user.balance
-    plans = PaymentPlan.objects.all()
-    if not balance or balance < 50:
-        message.reply_text(translate("low_balance_msg", user.language), reply_markup=plans_inline_button(plans=plans))
-        return
+
     instruction = {
         "ru": "Отвечай на русском языке.",
         "uz": "O'zbek tilida javob ber.",
@@ -262,6 +253,8 @@ def main_message_handler(update: Update, context: CallbackContext) -> None:
         return handle_full_name(update, context)
     if button_translate("about", user.language).strip() == message:
         return handle_about_section(update, context)
+    if button_translate("github", user.language).strip() == message:
+        return handle_github_section(update, context)
     if button_translate("contact", user.language).strip() == message:
         return handle_contact(update, context)
     if button_translate("settings", user.language).strip() == message:
@@ -274,43 +267,3 @@ def main_message_handler(update: Update, context: CallbackContext) -> None:
         return start(update, context)
     return gpt_handle_text(update, context)
 
-
-def handle_inline_plan_handler(update: Update, context: CallbackContext) -> None:
-    query = update.callback_query
-    plan = query.data.strip()
-    _, plan_id = plan.split("_", 1)
-    try:
-        plan = PaymentPlan.objects.get(id=plan_id)
-    except PaymentPlan.DoesNotExist:
-        return start(query, context)
-    if not plan:
-        return start(query, context)
-    chat_id = query.from_user.id
-    title = plan.title
-    description = plan.description
-    payload = f"{plan_id}_{chat_id}"
-    currency = "UZS"
-    price = plan.price * 100
-    prices = [LabeledPrice(label=title, amount=price)]
-    plan_key = f"plan_{plan_id}"
-
-    context.bot.send_invoice(
-        chat_id,
-        title=title,
-        description=description,
-        payload=payload,
-        provider_token=settings.PAYMENT_PROVIDER_TOKEN,
-        currency=currency,
-        prices=prices,
-        start_parameter=plan_key,
-        is_flexible=False
-    )
-
-
-def main_inline_handler(update: Update, context: CallbackContext) -> None:
-    query = update.callback_query
-    data = query.data
-    if data.startswith("plan"):
-        return handle_inline_plan_handler(update, context)
-    else:
-        return main_menu(query, context)

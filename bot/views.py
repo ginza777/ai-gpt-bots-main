@@ -11,7 +11,7 @@ from telegram.ext import (
     CallbackQueryHandler,
 )
 
-from bot.handlers import start, main_message_handler, main_inline_handler, handle_contact, handle_help_command, \
+from bot.handlers import start, main_message_handler, handle_contact, handle_help_command, \
     handle_phone_number_contact
 
 token = settings.AI_BOT_TOKEN

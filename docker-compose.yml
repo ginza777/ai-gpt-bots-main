@@ -28,14 +28,14 @@ services:
       - seccomp:unconfined
     volumes:
       - ./:/app
-      - ./static:/home/app/web/static
+      - ./staticfiles:/home/app/web/staticfiles
       - ./media:/home/app/web/media
     env_file:
       - .env
     environment:
       - TZ=Asia/Tashkent
     ports:
-      - "8001:8001"
+      - "8000:8000"
     depends_on:
       - db
       - redis
@@ -45,6 +45,19 @@ services:
     container_name: ${PROJECT_NAME}_redis
     image: redis:7.2.4-alpine
     restart: always
+
+  fastapi:
+    build:
+      context: .     # Loyihaning ildizi
+    container_name: ${PROJECT_NAME}_fastapi
+    command: uvicorn bot.fastapi:app --host 0.0.0.0 --port 8001
+    ports:
+      - "8001:8001"
+    depends_on:
+      - redis
+      - db
+    networks:
+      - app_network
 
   pgbouncer:
     container_name: ${PROJECT_NAME}_pgbouncer
@@ -78,7 +91,7 @@ services:
   celery_worker:
     <<: *web
     ports: [ ]
-    command: celery -A core.celery worker --concurrency=18 --loglevel=info
+    command: celery -A core.celery_app worker --concurrency=18 --loglevel=info --hostname=ai_gpt_worker@%h
     container_name: ${PROJECT_NAME}_celery_worker
     depends_on:
       - web
@@ -108,3 +121,6 @@ services:
 volumes:
   postgres_data:
   static_volume:
+networks:
+  app_network:
+    driver: bridge

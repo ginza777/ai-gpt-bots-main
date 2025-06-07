@@ -109,6 +109,11 @@ We’re always here to help you!"""
             "uz": "⚙️ Sozlamalar\nO'zgartirmoqchi bot'lganingizni tanlang:",
             "ru": "⚙️ Настройки\nВыберите, что хотите изменить:"
         },
+    "github_section": {
+        "en": "🌐 GitHub Repository <a href='https://github.com/ginza777/ai-gpt-bots-main/tree/master'>Click here</a>",
+        "uz": "🌐 GitHub Repositori <a href='https://github.com/ginza777/ai-gpt-bots-main/tree/master'>Linkga kirish</a>",
+        "ru": "🌐 Репозиторий GitHub <a href='https://github.com/ginza777/ai-gpt-bots-main/tree/master'>Перейти по ссылке</a>"
+    },
 }
 
 BUTTONS = {
