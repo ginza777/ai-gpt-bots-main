@@ -16,7 +16,9 @@ DOMAIN = env.str("DOMAIN", "http://localhost:8000")
 ALLOWED_HOSTS = [
     "*"
 ]
-
+SECURE_SSL_REDIRECT = True  # HTTP so‘rovlarini HTTPS ga yo‘naltiradi
+SESSION_COOKIE_SECURE = True  # Cookie faqat HTTPS orqali yuboriladi
+CSRF_COOKIE_SECURE = True  # CSRF tokenlari faqat HTTPS orqali yuboriladi
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
