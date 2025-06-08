@@ -137,7 +137,7 @@ CORS_ORIGIN_ALLOW_ALL = True
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_HEADERS = ["*","www.zamonsher.icu","zamonsher.icu"]
 
-APPEND_SLASH = True
+APPEND_SLASH = False
 
 AI_BOT_TOKEN = env.str("BOT_TOKEN")
 
