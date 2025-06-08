@@ -16,9 +16,7 @@ DOMAIN = env.str("DOMAIN", "http://localhost:8000")
 ALLOWED_HOSTS = [
     "*"
 ]
-SECURE_SSL_REDIRECT = True  # HTTP so‘rovlarini HTTPS ga yo‘naltiradi
-SESSION_COOKIE_SECURE = True  # Cookie faqat HTTPS orqali yuboriladi
-CSRF_COOKIE_SECURE = True  # CSRF tokenlari faqat HTTPS orqali yuboriladi
+
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -28,7 +26,6 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     "django_celery_beat",
     "django_celery_results",
-    'sslserver',
     "bot",
     "base",
 ]
@@ -37,7 +34,6 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    "django.middleware.csrf.CsrfViewMiddleware",
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
