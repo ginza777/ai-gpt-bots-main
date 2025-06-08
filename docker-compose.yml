@@ -30,7 +30,7 @@ services:
       - seccomp:unconfined
     volumes:
       - ./:/app
-      - ./staticfiles:/home/app/web/staticfiles
+      - ./static:/home/app/web/static
       - ./media:/home/app/web/media
     env_file:
       - .env
