@@ -14,7 +14,7 @@ DEBUG = env.str("DEBUG", default=False)
 DOMAIN = env.str("DOMAIN", "http://localhost:8000")
 
 ALLOWED_HOSTS = [
-    "*"
+    "*","www.zamonsher.icu","zamonsher.icu"
 ]
 
 INSTALLED_APPS = [
@@ -135,7 +135,7 @@ CSRF_COOKIE_SECURE = True
 
 CORS_ORIGIN_ALLOW_ALL = True
 CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOW_HEADERS = ["*"]
+CORS_ALLOW_HEADERS = ["*","www.zamonsher.icu","zamonsher.icu"]
 
 APPEND_SLASH = False
 
